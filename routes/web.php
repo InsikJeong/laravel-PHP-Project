@@ -16,7 +16,23 @@ Route::get('/', function () {
 });
 
 Route::resource('boards','boardsController');
+
 Route::resource('members','MembersController');
+Route::post('members/{id}/update/','MembersController@update');
+// Route::GET('members/create','MembersController@create');
+Route::post('members/store','MembersController@store');
+// // Route::get('members/update/{id}',[
+//     'as'=> 'members.update',
+//     'uses'=> 'MembersController@update'
+// ]);
+
+Route::get('/test',function(){
+    return view('test');
+});
+
+Route::post('/test/aa',function(){
+    return view('test');
+});
 // Route::get('auth/login',function(){
 //     $credentials = [ // 로그인 기능 : 입력구현 하는 걸 권장
 //         'email'=>'jis@naver.com',

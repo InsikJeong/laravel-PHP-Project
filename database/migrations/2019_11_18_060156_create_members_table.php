@@ -17,6 +17,7 @@ class CreateMembersTable extends Migration
             $table->bigIncrements('id');
             $table->text('name');
             $table->text('comments');
+            $table->string('filename');
             $table->timestamps();
         });
     }

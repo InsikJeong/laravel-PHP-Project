@@ -25,16 +25,15 @@
 
 @section('script')
     <script>
-        // <meta name="csrf-token" content="{{ csrf_token() }}">
-        $.ajaxSetup({
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-            }
-        }); 
         console.log("성공했다");
         // console.log({{ csrf_token() }});
         console.log("성공했다");
         $('.button_delete').on('click',function(e){
+            $.ajaxSetup({
+                 headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                }
+            }); 
             console.log("요청도 성공했다");
             // var boardId = $('board').data('id');
             var boardId = '{{$board->id}}';

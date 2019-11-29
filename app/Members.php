@@ -6,12 +6,12 @@ use Illuminate\Database\Eloquent\Model;
 
 class Members extends Model
 {
-    protected $fillable =['name','comments','image']; // MassAssignment 대응 
+    protected $fillable =['name','comments','filename']; // MassAssignment 대응 
 
 
-    public function attachments(){
-        return $this->hasMany(Attachment::class);
-    }
+    // public function attachments(){
+    //     return $this->hasMany(Attachment::class);
+    // }
     // public function members(){
     //     return Members::class;
     // }

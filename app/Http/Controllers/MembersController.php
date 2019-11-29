@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Validator;
 
 class MembersController extends Controller
 {
@@ -14,7 +15,6 @@ class MembersController extends Controller
      */
     public function index()
     {
-        // $attachments = \App\Attachment::get();
         $members = \App\Members::get();
         return view('members.index',compact('members'));
     }
@@ -27,7 +27,6 @@ class MembersController extends Controller
     public function create()
     {
         $members = new \App\Members;
-        // $attachment = new \App\Attachment;
 
         return view('members.create',compact('members'));
     }
@@ -38,36 +37,24 @@ class MembersController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(\App\Http\Requests\MembersRequest $request)
-    {
-        
-        $members = \App\Members::create($request->all());
+    public function store(Request $request)
+    {   
+        // dd($request->file);
+        if($request->hasFile('file')){
+            $file = $request->file('file');
+            $filename = Str::random().filter_var($file->getClientOriginalName(), FILTER_SANITIZE_URL);
 
-        if($request->hasFile('files')){
-            $files= $request->file('files');
+            $members = \App\Members::create([ #   1 
+                'name'=>$request->name,
+                'comments'=>$request->comments,
+                'filename' => $filename,
+            ]);
 
-            if ($request->hasFile('files')) {
-                // 파일 저장
-                $files = $request->file('files');
-     
-                foreach($files as $file) {
-                    $filename = Str::random().filter_var($file->getClientOriginalName(), FILTER_SANITIZE_URL);
-     
-                    // 순서 중요 !!!
-                    // 파일이 PHP의 임시 저장소에 있을 때만 getSize, getClientMimeType등이 동작하므로,
-                    // 우리 프로젝트의 파일 저장소로 업로드를 옮기기 전에 필요한 값을 취해야 함.
-                    $members->attachments()->create([
-                        'filename' => $filename,
-                        'bytes' => $file->getSize(),
-                        'mime' => $file->getClientMimeType()
-                    ]);
-     
-                    $file->move(attachments_path(), $filename);
-                }
+            $file->move(attachments_path(), $filename);
             }
+           
 
-        }
-        return redirect(route('members.index'));
+        return response()->json([],201);
     }
 
     /**
@@ -100,11 +87,19 @@ class MembersController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(\App\Http\Requests\MembersRequest $request, \App\Members $member)
-    {
-        $member->update($request->all());
-        // return redirect(route('members.index'));
-        return redirect(route('members.index'));
+    // \App\Http\Requests\MembersRequest $request, \App\Members $member
+    public function update(Request $request, $id)
+    {   
+        $validator = Validator::make($request->all(), [
+            'name2' => 'require',
+            'comments2' => 'required', 
+        ]);
+        \App\Members::where('id',$id)->update([
+            'name'=>$request->name2,
+            'comments'=>$request->comments2,
+        ]);
+
+        return response()->json([],204);
     }
 
     /**
