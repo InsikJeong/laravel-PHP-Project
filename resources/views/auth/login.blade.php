@@ -8,9 +8,6 @@
                 <div class="card-header">{{ __('Login') }}</div>
 
                 <div class="card-body">
-                     <form action="/" method='GET'>
-                         <button type="submit" > 홈으로 </button>
-                      </form>
                     <form method="POST" action="{{ route('login') }}">
                         @csrf
 

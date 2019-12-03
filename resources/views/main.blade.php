@@ -10,9 +10,6 @@
     <form action="login" method='GET'>
         <button type="submit" >로그인 </button>
     </form>
-    <form action="boards" method='GET'>
-        <button type="submit" >게시판 </button>
-    </form>
     <form action="members" method='GET'>
         <button type="submit" > 조원소개 </button>
     </form>

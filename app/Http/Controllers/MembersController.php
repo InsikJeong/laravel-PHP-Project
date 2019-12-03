@@ -18,7 +18,15 @@ class MembersController extends Controller
         $members = \App\Members::get();
         return view('members.index',compact('members'));
     }
+    
+    public function ajaxIndex(Request $request, $id){
 
+        // print($id);
+        $members = \App\Members::where('id',$id)->first();
+        // $members = \App\Members::get();
+        
+        return response()->json($members,201);
+    }
     /**
      * Show the form for creating a new resource.
      *
@@ -52,9 +60,8 @@ class MembersController extends Controller
 
             $file->move(attachments_path(), $filename);
             }
-           
 
-        return response()->json([],201);
+        return response()->json($members,201);
     }
 
     /**
@@ -99,7 +106,10 @@ class MembersController extends Controller
             'comments'=>$request->comments2,
         ]);
 
-        return response()->json([],204);
+        $members = \App\Members::where('id',$id)->first();
+
+        return response()->json($members,201);
+        // return response()->json([],204);
     }
 
     /**

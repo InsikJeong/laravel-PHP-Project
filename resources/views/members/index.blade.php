@@ -7,87 +7,72 @@
     <label class="btn btn-primary btnCreate" onclick="create()">멤버 추가</label>
     <div class="createDiv" id="createDiv">
         <hr />
-        <form id="creForm" enctype="multipart/form-data">
-            {!! csrf_field() !!} {{-- @csrf --}}
-            {{-- route()-url경로, csrf_field(): csrf 대응 헬퍼함수 --}}
-            <div class="form-group {{ $errors->has('name') ? 'has-error' : '' }}">
-                <label for="name">이름</label>
-                <input type="text" name="name" id="name" value="{{ old('name') }}" class="form-control"/>
-                {!! $errors->first('name','<span class="form-error">:message</span>') !!}
-            </div>
-
-            <div class="form-group {{ $errors->has('comments') ? 'has-error' : ''}}">
-                <label for="comments">한마디</label>
-                <textarea name="comments" id="comments" rows="10" class="form-control">{{ old('comments')}}</textarea>
-                {!! $errors->first('comments','<span class="form-error">:message</span>') !!}
-            </div>
-            <div class="form-group {{$errors->has('files') ? 'has-error' :'' }}">
-                <label for="files">파일</label>
-                <input type="file" name="file" id="files" class="form-control" multiple/>
-                {!!$errors->first('files.0', '<span class="form-error">:messaage</span>')!!}
-            </div>
-            <div class="form-group">
-                <label class="btn btn-primary btnCre" onclick="btnCre()">
-                    저장하기
-                </label>
-            </div>
-        </form>
     </div>
     </div>
+    <div class="contentDiv" id="contentDiv">
         @forelse ($members as $member)
-            <div class="memberDiv">
+            <div class="memberDiv" id="memberDiv{{$member->id}}">
                 <div class="imgDiv">
-                    <ul class="attachment__article">
                         <img src="http://127.0.0.1:8000/files/{{$member->filename}}" alt="11"
-                        onclick="imgClick({{$member->id}})"></img>
-                    </ul>
+                        onclick="imgClick({{$member->id}},'{{$member->name}}','{{$member->comments}}')"></img>
                 </div>
-                <div class="conDiv">
-                    <div class="nameDiv" id="nameDiv{{$member->id}}">  {{$member->name}} </div>
-                    <div class="commentsDiv" id="commentsDiv{{$member->id}}">{{$member->comments}}</div>
-                </div>
+                <div class="conDiv" id="conDiv{{$member->id}}"></div>
+                <div class="btnDiv">
                     <label class="btn btn-primary btnEdit" onclick="edit({{$member->id}})">정보 수정</label>
                     <label onclick="del('{{$member->id}}')">멤버 삭제</label>
+                </div>
             <div class="editDiv" id="editDiv{{$member->id}}">
-                <form  id="editForm{{$member->id}}" action="{{route('members.update',$member->id)}}" method="POST">
-                    <label for="name2">이름</label>
-                    <input type="text" name="name2" id="name2" value="{{old('name2',$member->name)}}" class="..."/>
-                    <hr>
-                    <label for="comments2">한마디</label>
-                    <textarea name="comments2" id="comments2" rows="10" class="form-control">{{old('comments2',$member->comments)}}</textarea>
-                    <label class="btn btn-primary" onclick="btnEdit({{$member->id}})">수정하기</label>
-                </form>
             </div>  
             </div>
         @empty
-             <p>멤버가 없습니다.</p>
         @endforelse
+    </div>
 @stop
 @section('script')
     <script>
         var createCheck = 1; //create()함수 온오프 관리 
         var editCheck =1; //edit 함수 온오프 관리
-        var check =1; // 조회 함수 온오프 관리
+        var check =999; // 조회 함수 온오프 관리
+        var nameDiv = document.createElement("div");
+        var commentsDiv = document.createElement("div");
 
-        function imgClick(id){
+        function imgClick(id,name,comments){
+            console.log('imgClick!!!');
             $.ajaxSetup({ headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') } });
             $.ajax({
                 type:"GET",
-                url:'/members/'
-            }).then(function(e){
-                console.log("id"+id);
-                if(check == 1){
-                    console.log("이프"+check);
-                    document.getElementById("nameDiv"+id).style.display="block";
-                    document.getElementById("commentsDiv"+id).style.display="block";
-                    check= 2;
+                url:'/members/'+id+'/ajax',
+                data: {'id': id, 'name' : name, 'comments':comments},
+            }).then(function(data){
+                console.log(data);
+                var conDiv = document.getElementById("conDiv"+data.id);
+                if(check==999){
+                    nameDiv.id = "nameDiv"+data.id;
+                    commentsDiv.id = "commentsDiv"+data.id;
+                    nameDiv.innerHTML= data.name;
+                    commentsDiv.innerHTML= data.comments;                   
+                    conDiv.append(nameDiv);
+                    conDiv.append(commentsDiv);
+                    check= data.id;
+                    console.log("이프문"+check);
+                }
+                else if(check==data.id){
+                    nameDiv.innerHTML= '';
+                    commentsDiv.innerHTML= '';
+                    check=999;
+                    console.log("이프엘스문"+check);
                 }
                 else{
-                    console.log("엘스"+check);
-                    document.getElementById("nameDiv"+id).style.display="none";
-                    document.getElementById("commentsDiv"+id).style.display="none";
-                    check=1;
+                    nameDiv.id = "nameDiv"+data.id;
+                    commentsDiv.id = "commentsDiv"+data.id;
+                    nameDiv.innerHTML= data.name;
+                    commentsDiv.innerHTML= data.comments;                   
+                    conDiv.append(nameDiv);
+                    conDiv.append(commentsDiv);
+                    check= data.id;
+                    console.log("엘스문"+check);
                 }
+            
             })
         };
         function del(id){
@@ -108,6 +93,7 @@
         };
 
         function btnCre(){
+            var contentDiv = document.getElementById('contentDiv');
             var form =$('#creForm')[0];
             var data = new FormData(form);
             $.ajaxSetup({ headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') } });
@@ -121,32 +107,91 @@
                     contentType: false,
                     cache:false,
                     success:function(data){
-                        window.location.href='/members';
+                        console.log(data);
+                        var createDiv = document.getElementById('createDiv');
+                        createDiv.innerHTML = '';
+                        createCheck=1;
+                        var editDiv = document.createElement('div');
+                        var memberDiv = document.createElement('div');
+                        var imgDiv = document.createElement('div');
+                        var conDiv = document.createElement('div');
+                        var btnDiv = document.createElement('div');
+                        var nameDiv = document.createElement('div');
+                        var commentsDiv = document.createElement('div');
+                        var img = document.createElement('img');
+                        var btnEdit = document.createElement('label');
+                        var btnDel =document.createElement('label');
+
+                        editDiv.id = "editDiv"+data.id;
+                        editDiv.className = "editDiv";
+
+                        nameDiv.id= "nameDiv"+data.id;
+                        commentsDiv.id = "comments"+data.id;
+
+                        img.src="http://127.0.0.1:8000/files/"+data.filename;
+                        img.alt= "사진 안보여";
+                        $(img).on('click',function(){
+                            imgClick(data.id,data.name,data.comments);
+                        });
+
+                        btnEdit.innerHTML="정보 수정";
+                        $(btnEdit).on('click',function(){                            
+                            edit(data.id);
+                        });
+                        btnDel.innerHTML="멤버 삭제";
+                        $(btnDel).on('click',function(){
+                            del(data.id);
+                        });
+
+                        memberDiv.id = 'memberDiv'+data.id;
+                        memberDiv.className = "memberDiv";
+                        imgDiv.className = "imgDiv";
+                        conDiv.id = "conDiv"+data.id;
+                        conDiv.className = "conDiv";
+                        btnDiv.className = "btnDiv";
+                        btnEdit.className = "btn btn-primary";
+
+                        contentDiv.appendChild(memberDiv);
+                        memberDiv.appendChild(imgDiv);
+                        memberDiv.appendChild(conDiv);
+                        conDiv.appendChild(nameDiv);
+                        conDiv.appendChild(commentsDiv);
+                        memberDiv.appendChild(btnDiv);
+                        memberDiv.appendChild(editDiv);
+
+                        imgDiv.appendChild(img);
+
+                        btnDiv.appendChild(btnEdit);
+                        btnDiv.appendChild(btnDel);
                     }
                     ,
-                    error:function(data){
-                        console.log(data);
-                    alert("error");
+                    error:function(e){
+                        console.log(e);
+                    alert(e);
                     }
                 });
         }
         function btnEdit(id){
+            console.log('btnEdit 실행!');
+            var editDiv = document.getElementById('editDiv'+id);
             var form  = $('#editForm'+id)[0];
             var data = new FormData(form);
-            console.log(form);
             $.ajaxSetup({ headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') } });
             $.ajax({
                     type:"POST",
                     url: '/members/' +id+'/update',
-                    // data: $('#editForm').serialize(),
                     data: data,
                     processData:false,
                     contentType:false,
-                    cache:false,
                 }).then(function(data){
+                    var nameDiv = document.getElementById('nameDiv'+data.id);
+                    var commentsDiv = document.getElementById('commentsDiv'+data.id);
                     console.log("수정 성공");
-                    // alert(data);
-                    window.location.href='/members';
+                    console.log(data);
+                    // nameDiv.innerHTML= data.name;
+                    // commentsDiv.innerHTML= data.comments;
+                    editDiv.innerHTML = '';
+                    editCheck=1;
                 },function(e){
                     console.log("수정실패");
                     console.log(e);
@@ -155,53 +200,135 @@
 
 
         function create(){
-            console.log(createCheck);
-            if(createCheck == 1){
-                document.getElementById("createDiv").style.display="block";
-                createCheck=0;
+                var createDiv = document.getElementById('createDiv');
+                var creForm = document.createElement('form');
+                var nameLabel = document.createElement('label');
+                var nameInput = document.createElement('input');
+                var commentsLabel = document.createElement('label');
+                var commentsTextarea = document.createElement('textarea');
+                var fileLabel = document.createElement('label');
+                var fileInput = document.createElement('input');
+                var creLabel = document.createElement('label');
+
+                var nameDiv = document.createElement('div');
+                var commentsDiv=document.createElement('div');
+                var fileDiv =document.createElement('div');
+                nameDiv.className = "form-group";
+                commentsDiv.className = "form-group";
+                fileDiv.className = "form-group";
+
+                creForm.id = "creForm";
+                creForm.enctype = "multipart/form-data";
+
+                nameLabel.innerHTML = "이름";
+                nameInput.type ="text";
+                nameInput.name = "name";
+
+                commentsLabel.innerHTML="한마디";
+                commentsTextarea.name ='comments';
+                commentsTextarea.className = "form-control";
+                
+                fileLabel.innerHTML = "파일";
+                fileInput.type = "file";
+                fileInput.name = "file";
+
+                creLabel.innerHTML = "저장 하기";
+                $(creLabel).on('click',function(){
+                    btnCre();
+                })
+                creLabel.className="btn btn-primary";
+
+                if(createCheck == 1){
+                    createDiv.appendChild(creForm);
+                    creForm.appendChild(nameDiv);
+                    creForm.appendChild(commentsDiv);
+                    creForm.appendChild(fileDiv);
+                    nameDiv.appendChild(nameLabel);
+                    nameDiv.appendChild(nameInput);
+                    commentsDiv.appendChild(commentsLabel);
+                    commentsDiv.appendChild(commentsTextarea);
+                    fileDiv.appendChild(fileLabel);
+                    fileDiv.appendChild(fileInput);
+                    creForm.appendChild(creLabel);
+                    createCheck=0;
                 }
-            else if(createCheck == 0){
-                console.log("작동");
-                document.getElementById("createDiv").style.display="none";
-                createCheck=1;
-            }
-            
+                else if(createCheck == 0){
+                    console.log("작동");
+                    createDiv.innerHTML='';
+                    createCheck=1;
+                }         
         }
 
         function edit(id){
-            if(editCheck == 1){
-                document.getElementById("editDiv"+id).style.display="block";
-                editCheck=0;
-                }
-            else if(editCheck == 0){
-                document.getElementById("editDiv"+id).style.display="none";
-                editCheck=1;
-            }
+            var memberDiv = document.getElementById('memberDiv'+id);
+            var editDiv = document.getElementById('editDiv'+id);
+            $.ajaxSetup({ headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') } });
+            $.ajax({
+                type:"GET",
+                url:'/members/'+id+'/ajax',
+                data: {'id': id},
+            }).then(function(data){
+                var editForm = document.createElement('form');
+                var nameLabel = document.createElement('label');
+                var nameInput = document.createElement('input');
+                var commentsLabel = document.createElement('label');
+                var commentsTextarea = document.createElement('textarea');
+                var editLabel = document.createElement('label');
+
+         
+                editForm.id = "editForm"+data.id;
+                editForm.method = "POST";
+
+                nameLabel.innerHTML = "이름";
+                nameInput.type = "text";
+                nameInput.id="name2";
+                nameInput.name="name2";
+                nameInput.value = data.name;
+                nameInput.className = "form-control"
+
+                commentsLabel.innerHTML = "한마디";
+                commentsTextarea.type = "textarea";
+                commentsTextarea.id="comments2";
+                commentsTextarea.name="comments2";
+                commentsTextarea.value = data.comments;
+                commentsTextarea.className = "form-control"
+
+                editLabel.className = "btn btn-primary";
+                editLabel.innerHTML = "수정하기";
+                $(editLabel).on("click",function(){
+                    btnEdit(data.id);
+                })
+
+                if(editCheck == 1){
+                    console.log("이프문");
+                    editDiv.appendChild(editForm);
+                    editForm.appendChild(nameLabel);
+                    editForm.appendChild(nameInput);
+                    editForm.appendChild(commentsLabel);
+                    editForm.appendChild(commentsTextarea);
+                    editForm.appendChild(editLabel);
+                    editCheck=0;
+                                  }
+                else if(editCheck == 0){
+                    console.log("엘스문");
+                    editDiv.innerHTML = '';
+                    editCheck=1;
+                                       }
+            })
+        
         }
       
     </script>
 @stop
 @section('style')
         <style>
-            .editDiv{
-                display:none;
-            }
-            .createDiv{
-                display:none;
-            }
             .memberDiv{
-                /* display : flex;
-                flex-wrap:wrap;
-                justify-content: center;
-                margin: 50px; */
                 display:inline-block;
+
             }
 
-            .nameDiv,.commentsDiv{
-                display : none;
-                margin-left:70px;
+            .conDiv,.btnDiv{
                 width:230px;
-
             }
 
             .btn-info{
